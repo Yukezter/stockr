@@ -1,0 +1,39 @@
+{
+  "name": "stockr",
+  "version": "1.0.0",
+  "description": "A React web application that displays real-time stock data.",
+  "main": "server.js",
+  "scripts": {
+    "start": "if-env NODE_ENV=production && npm run start:prod || npm run start:dev",
+    "watch": "nodemon server/server.js",
+    "start:prod": "node server/server.js",
+    "start:dev": "concurrently \"nodemon server/server.js --ignore 'client/*'\" \"npm run client\"",
+    "client": "cd client && npm run start",
+    "install": "cd client && npm install",
+    "build": "cd client && npm run build",
+    "heroku-postbuild": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yukezter/stockr.git"
+  },
+  "author": "Bryan Hinchliffe",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Yukezter/stockr/issues"
+  },
+  "homepage": "https://github.com/Yukezter/stockr#readme",
+  "dependencies": {
+    "@hapi/joi": "^16.1.7",
+    "bcryptjs": "^2.4.3",
+    "concurrently": "^5.0.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-promise-router": "^3.0.3",
+    "helmet": "^3.21.2",
+    "if-env": "^1.0.4",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.7.12",
+    "morgan": "^1.9.1"
+  }
+}
