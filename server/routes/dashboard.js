@@ -6,4 +6,8 @@ router
   .route('/')
   .get(DashboardController.getDashboard)
 
+router
+  .route('/resendEmailVerification')
+  .get(DashboardController.resendEmailVerification)
+
 module.exports = router
