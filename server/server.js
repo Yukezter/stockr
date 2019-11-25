@@ -6,8 +6,18 @@ const morgan = require('morgan')
 
 const verifyToken = require('./verifyToken')
 
+// Database connection
+const DB_URI = process.env.MONGODB_URI || process.env.MONGODB_URI_LOCAL
+
+mongoose.connect(DB_URI, { 
+  useNewUrlParser: true,
+  useCreateIndex: true,
+  useFindAndModify: false,
+  useUnifiedTopology: true,
+})
+
+// Setup server
 const app = express()
-const PORT = process.env.PORT || 8080
 
 // Middleware
 app.use(express.urlencoded({ extended: false }))
@@ -21,16 +31,15 @@ app.use('/users', require('./routes/users'))
 // Protected routes
 app.use('/dashboard', verifyToken, require('./routes/dashboard'))
 
-// Database connection
-mongoose.connect(
-  process.env.MONGODB_URI || process.env.MONGODB_URI_LOCAL, 
-  { 
-    useNewUrlParser: true,
-    autoIndex: false,
-    useFindAndModify: false,
-    useUnifiedTopology: true,
-  },
-)
+// Error handling middleware
+app.use((err, req, res, next) => {
+  if (!err.statusCode) err.statusCode = 500
+  res.status(err.statusCode).send(err.message)
+
+  console.log(err)
+})
 
 // Start server
-app.listen(PORT, console.log(`Server listening on port ${PORT}`))
+const PORT = process.env.PORT || 8080
+
+app.listen(PORT, () => console.log(`Server listening on port ${PORT}`))

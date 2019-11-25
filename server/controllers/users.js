@@ -8,22 +8,23 @@ const Token = require('../models/Token')
 const { formValidation } = require('../util')
 const { sendGrid } = require('../util')
 
+const { ApplicationError } = require('../ApplicationError')
+
 const signJWT = userId => {
   return jwt.sign({
     iss: 'Stockr',
     sub: userId,
     iat: new Date().getTime(),
-    // 5 minute expiration
-    exp: Math.floor(Date.now() / 1000) + (60 * 5)
+    exp: Math.floor(Date.now() / 1000) + (60 * 5) // 5 minutes
   }, process.env.TOKEN_SECRET)
 }
 
 module.exports = {
   signUp: async (req, res, next) => {
 
-    // Validation
+    // Form validation
     const { error } = formValidation.signUpValidation(req.body)
-    if (error) return res.status(400).send(error)
+    if (error) return next(new ApplicationError(400, error.details[0].message))
 
     const username = req.body.username.toLowerCase()
     const email = req.body.email.toLowerCase()
@@ -34,18 +35,14 @@ module.exports = {
       $or: [{ username }, { email }]
     })
 
-    // Check if user exists
+    // Make sure user doesn't already exist
     if (user) {
-      const field = username === user.username ? 'Username' : 'Email'
-      return res.status(400).send(`${field} is taken.`)
+      const field = username === user.username ? 'username' : 'email'
+      return next(new ApplicationError(409, `${field} is taken`))
     }
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10)
-    const hashedPassword = await bcrypt.hash(password, salt)
-
     // Create and save a new user to the database
-    const newUser = new User({ username, email, password: hashedPassword })
+    const newUser = new User({ username, email, password })
     const savedUser = await newUser.save()
 
     // Generate random token
@@ -63,13 +60,12 @@ module.exports = {
     const jwtToken = signJWT(savedUser._id)
 
     res.header('Authorization', `Bearer ${jwtToken}`).json({ jwtToken, savedToken })
-
   },
   signIn: async (req, res, next) => {
 
-    // Validation
+    // Form validation
     const { error } = formValidation.signInValidation(req.body)
-    if (error) return res.status(400).send(error)
+    if (error) return next(new ApplicationError(400, error.details[0].message))
 
     const usernameOrEmail = req.body.usernameOrEmail.toLowerCase()
     const { password } = req.body
@@ -80,36 +76,31 @@ module.exports = {
     })
 
     // Check if user does not exist
-    if (!user) return res.status(400).send('No user was found.')
+    if (!user) return next(new ApplicationError(404, 'user not found'))
 
     // Check if passwords match
-    const passwordsMatch = await bcrypt.compare(password, user.password)
-    if (!passwordsMatch) return res.status(400).send('Invalid credentials.')
+    const isMatch = await user.comparePassword(password, next)
+    if (!isMatch) return next(new ApplicationError(401, 'invalid password'))
 
     // Create JWT token
     const jwtToken = signJWT(user._id)
 
     res.header('Authorization', `Bearer ${jwtToken}`).send(jwtToken)
-
   },
   emailVerification: async (req, res, next) => {
-
     const { token } = req.query
 
     await Token.findOneAndDelete({ token }, async (err, doc) => {
-
-      if (err) return res.status(500).send(err)
-
-      if (!doc) return res.status(404).send('Token not found')
+      if (err) next(new ApplicationError(500, err.message))
+      if (!doc) next(new ApplicationError(404, 'token not found'))
 
       const user = await User.findById(doc.userId)
-      if (!user) return res.status(404).send('User not found')
+      if (!user) next(new ApplicationError(404, 'user not found'))
 
       user.active = true
       await user.save()
 
       res.send(user)
-
     })
   }, 
 }
