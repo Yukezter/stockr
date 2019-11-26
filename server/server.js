@@ -8,7 +8,6 @@ const verifyToken = require('./verifyToken')
 
 // Database connection
 const DB_URI = process.env.MONGODB_URI || process.env.MONGODB_URI_LOCAL
-
 mongoose.connect(DB_URI, { 
   useNewUrlParser: true,
   useCreateIndex: true,
@@ -26,17 +25,16 @@ app.use(helmet())
 app.use(morgan('dev'))
 
 // Routes
-app.use('/', require('./routes'))
 app.use('/users', require('./routes/users'))
-// Protected routes
+// Protected
 app.use('/dashboard', verifyToken, require('./routes/dashboard'))
 
-// Error handling middleware
+// express-promise-router handles all errors thrown inside
+// the route handlers and passes them in next()
 app.use((err, req, res, next) => {
   if (!err.statusCode) err.statusCode = 500
+  console.log(err.statusCode, err.message)
   res.status(err.statusCode).send(err.message)
-
-  console.log(err)
 })
 
 // Start server

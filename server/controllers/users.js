@@ -1,13 +1,9 @@
-const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const crypto = require('crypto')
 
 const User = require('../models/User')
 const Token = require('../models/Token')
 
 const { formValidation } = require('../util')
-const { sendGrid } = require('../util')
-
 const { ApplicationError } = require('../ApplicationError')
 
 const signJWT = userId => {
@@ -21,10 +17,9 @@ const signJWT = userId => {
 
 module.exports = {
   signUp: async (req, res, next) => {
-
     // Form validation
     const { error } = formValidation.signUpValidation(req.body)
-    if (error) return next(new ApplicationError(400, error.details[0].message))
+    if (error) throw new ApplicationError(400, error.details[0].message)
 
     const username = req.body.username.toLowerCase()
     const email = req.body.email.toLowerCase()
@@ -38,34 +33,24 @@ module.exports = {
     // Make sure user doesn't already exist
     if (user) {
       const field = username === user.username ? 'username' : 'email'
-      return next(new ApplicationError(409, `${field} is taken`))
+      throw new ApplicationError(409, `${field} is taken`)
     }
 
     // Create and save a new user to the database
     const newUser = new User({ username, email, password })
     const savedUser = await newUser.save()
 
-    // Generate random token
-    let token = crypto.randomBytes(48).toString('hex')
-
-    // Create and save a new token to the database
-    const newToken = new Token({ token, userId: savedUser._id })
-    const savedToken = await newToken.save()
-
     // Email the user the confirmation link
-    // sendGrid.emailVerficationLink(email, savedToken.token)
-    sendGrid.emailVerficationLink('ananonymouspuffin@gmail.com', savedToken.token)
+    await savedUser.sendVerificationEmail('ananonymouspuffin@gmail.com')
 
     // Create JWT token
     const jwtToken = signJWT(savedUser._id)
-
-    res.header('Authorization', `Bearer ${jwtToken}`).json({ jwtToken, savedToken })
+    res.header('Authorization', `Bearer ${jwtToken}`).json({ jwtToken })
   },
   signIn: async (req, res, next) => {
-
     // Form validation
     const { error } = formValidation.signInValidation(req.body)
-    if (error) return next(new ApplicationError(400, error.details[0].message))
+    if (error) throw new ApplicationError(400, error.details[0].message)
 
     const usernameOrEmail = req.body.usernameOrEmail.toLowerCase()
     const { password } = req.body
@@ -76,11 +61,11 @@ module.exports = {
     })
 
     // Check if user does not exist
-    if (!user) return next(new ApplicationError(404, 'user not found'))
+    if (!user) throw new ApplicationError(404, 'user not found')
 
     // Check if passwords match
-    const isMatch = await user.comparePassword(password, next)
-    if (!isMatch) return next(new ApplicationError(401, 'invalid password'))
+    const isMatch = await user.comparePassword(password)
+    if (!isMatch) throw new ApplicationError(401, 'invalid password')
 
     // Create JWT token
     const jwtToken = signJWT(user._id)
@@ -89,18 +74,16 @@ module.exports = {
   },
   emailVerification: async (req, res, next) => {
     const { token } = req.query
+    const tokenDoc = await Token.findOneAndDelete({ token })
+    if (!tokenDoc) throw new ApplicationError(404, 'token not found')
 
-    await Token.findOneAndDelete({ token }, async (err, doc) => {
-      if (err) next(new ApplicationError(500, err.message))
-      if (!doc) next(new ApplicationError(404, 'token not found'))
+    const user = await User.findById(tokenDoc.userId)
+    if (!user) throw new ApplicationError(404, 'user not found')
 
-      const user = await User.findById(doc.userId)
-      if (!user) next(new ApplicationError(404, 'user not found'))
+    user.active = true
+    user.verificationPending = false
+    await user.save()
 
-      user.active = true
-      await user.save()
-
-      res.send(user)
-    })
+    res.send(user)
   }, 
 }
