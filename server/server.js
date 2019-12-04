@@ -1,6 +1,7 @@
 require('dotenv').config({ path: `${__dirname}/.env` })
 const mongoose = require('mongoose')
 const express = require('express')
+const session = require('cookie-session')
 const helmet = require('helmet')
 const morgan = require('morgan')
 
@@ -18,9 +19,16 @@ mongoose.connect(DB_URI, {
 // Setup server
 const app = express()
 
-// Middleware
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
+
+// Middleware
+app.use(session({
+  secret: 'secret',
+  httpOnly: true,
+  sameSite: 'strict',
+  secure: true,
+}))
 app.use(helmet())
 app.use(morgan('dev'))
 
@@ -34,7 +42,7 @@ app.use('/dashboard', verifyToken, require('./routes/dashboard'))
 app.use((err, req, res, next) => {
   if (!err.statusCode) err.statusCode = 500
   console.log(err.statusCode, err.message)
-  res.status(err.statusCode).send(err.message)
+  res.status(err.statusCode).json(err.message)
 })
 
 // Start server

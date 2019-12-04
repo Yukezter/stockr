@@ -3,7 +3,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
 module.exports = {
   emailVerficationLink: (email, token) => {
-    const href = `${process.env.URL_HOST}/users/emailVerification?token=${token}`
+    const href = `${process.env.URL_HOST}/users/email-verification?token=${token}`
     sgMail.send({
       to: email,
       from: 'stockr@example.com',

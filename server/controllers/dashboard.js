@@ -4,7 +4,6 @@ const callEndpoint = (endpoint, queryParams) => {
   const token = process.env.IEX_CLOUD_API
   const params = (queryParams ? `?${queryParams}&` : `?`) + `token=${token}`
   const url = `https://cloud.iexapis.com/stable${endpoint}${params}`
-  console.log(url)
   return axios.get(url)
 }
 

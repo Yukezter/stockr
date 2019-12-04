@@ -11,11 +11,17 @@ const signJWT = userId => {
     iss: 'Stockr',
     sub: userId,
     iat: new Date().getTime(),
-    exp: Math.floor(Date.now() / 1000) + (60 * 5) // 5 minutes
+    // exp: Math.floor(Date.now() / 1000) + (60 * 5) // 5 minutes
   }, process.env.TOKEN_SECRET)
 }
 
 module.exports = {
+  get: async (req, res, next) => {
+    res.json({
+      username: req.user.username,
+      email: req.user.email
+    })
+  },
   signUp: async (req, res, next) => {
     // Form validation
     const { error } = formValidation.signUpValidation(req.body)
@@ -31,10 +37,7 @@ module.exports = {
     })
 
     // Make sure user doesn't already exist
-    if (user) {
-      const field = username === user.username ? 'username' : 'email'
-      throw new ApplicationError(409, `${field} is taken`)
-    }
+    if (user) throw new ApplicationError(409,  'username or email is taken')
 
     // Create and save a new user to the database
     const newUser = new User({ username, email, password })
@@ -45,7 +48,7 @@ module.exports = {
 
     // Create JWT token
     const jwtToken = signJWT(savedUser._id)
-    res.header('Authorization', `Bearer ${jwtToken}`).json({ jwtToken })
+    res.cookie('jwt', jwtToken).send(jwtToken)
   },
   signIn: async (req, res, next) => {
     // Form validation
@@ -69,8 +72,7 @@ module.exports = {
 
     // Create JWT token
     const jwtToken = signJWT(user._id)
-
-    res.header('Authorization', `Bearer ${jwtToken}`).send(jwtToken)
+    res.cookie('jwt', jwtToken).send(jwtToken)
   },
   emailVerification: async (req, res, next) => {
     const { token } = req.query

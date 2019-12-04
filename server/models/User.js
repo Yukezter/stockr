@@ -60,9 +60,7 @@ UserSchema.methods.comparePassword = async function(candidatePassword) {
 
 UserSchema.methods.sendVerificationEmail = async function(email) {
   // Make sure email has not been verified
-  if (this.active) {
-    throw new ApplicationError(409, 'email already verified')
-  }
+  if (this.active) throw new ApplicationError(409, 'email already verified')
   // Delete any existing tokens associated with this user
   if (this.verificationPending) await Token.deleteOne({ userId: this._id })
 

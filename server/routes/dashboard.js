@@ -15,7 +15,7 @@ router
   .get(DashboardController.batch)
 
 router
-  .route('/resendEmailVerification')
+  .route('/resend-email-verification')
   .get(DashboardController.resendEmailVerification)
 
 module.exports = router

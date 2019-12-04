@@ -4,13 +4,13 @@ const { ApplicationError } = require('./ApplicationError')
 
 module.exports = async (req, res, next) => {
   const token = req.header('Authorization')
-  if (!token) return res.status(401).send('Access denied!')
+  if (!token) return next(new ApplicationError(401, 'access denied'))
 
   try {
     const verified = jwt.verify(token.split(' ')[1], process.env.TOKEN_SECRET)
 
     if (Date.now() >= verified.exp * 1000) {
-      next(new ApplicationError(401, 'expired token'))
+      return next(new ApplicationError(401, 'expired token'))
     }
 
     req.user = await User.findById(verified.sub)
