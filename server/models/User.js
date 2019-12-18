@@ -38,7 +38,11 @@ const UserSchema = new Schema({
   date: {
     type: Date,
     default: Date.now,
-  }
+  },
+  watchlist: [{
+    type: String,
+    uppercase: true,
+  }],
 })
 
 UserSchema.pre('save', async function(next) {

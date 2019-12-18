@@ -1,32 +1,60 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { makeStyles } from '@material-ui/core/styles'
+import { TextField, Button, Box, Typography } from '@material-ui/core'
 
-import { TextField, Button } from '@material-ui/core'
+import { Center, Link } from '../../subcomponents'
+
+const useStyles = makeStyles(theme => ({
+  form: {
+    paddingTop: `${theme.spacing(2)}px`,
+    paddingBottom: `${theme.spacing(2)}px`,
+  },
+}))
 
 export default (props) => {
+  const classes = useStyles()
   return (
     <React.Fragment>
-      <Link to={'/'}>Stockr</Link>
-      <form noValidate autoComplete="off">
-        <TextField
-          id="standard-basic"
-          label="Username or email"
-          name="usernameOrEmail"
-          value={props.usernameOrEmail}
-          onChange={props.handleChange}
-        />
-        <br/>
-        <TextField 
-          id="standard-basic"
-          label="Password"
-          name="password"
-          value={props.password}
-          onChange={props.handleChange}
-        />
-        <br/>
-        <Button variant="contained" onClick={props.handleClick}>Login</Button>
-      </form>
-      <Link to={'/register'}>Don't have an account? Sign up!</Link>
+      <Center>
+        <Box>
+          <Typography
+            component="h1"
+            variant="h3"
+            color="inherit"
+            align="left"
+          >
+            Login
+          </Typography>
+          <form noValidate autoComplete="off" className={classes.form}>
+            <TextField
+              id="standard-basic"
+              label="Username or email"
+              name="usernameOrEmail"
+              value={props.usernameOrEmail}
+              onChange={props.handleChange}
+            />
+            <br/>
+            <TextField 
+              id="standard-basic"
+              label="Password"
+              name="password"
+              value={props.password}
+              onChange={props.handleChange}
+            />
+            <br/>
+            <Box mt={3} mb={2}>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={props.handleClick}
+              >
+                Login
+              </Button>
+            </Box>
+          </form>
+          <Link to={'/register'}>Don't have an account? Sign up!</Link>
+        </Box>
+      </Center>
     </React.Fragment>
     
   )

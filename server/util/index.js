@@ -1,5 +1,5 @@
 const sendGrid = require('./sendGrid')
 const formValidation = require('./formValidation')
+const JWT = require('./JWT')
 
-exports.sendGrid = sendGrid
-exports.formValidation = formValidation
+module.exports = { sendGrid, formValidation, JWT }

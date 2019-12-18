@@ -1,5 +1,3 @@
-import axios from 'axios'
-
 import {
   USER_LOADING,
   USER_LOADED,
@@ -11,47 +9,25 @@ import {
   REGISTER_FAIL,
   RESET,
 } from './types'
-
-export const tokenConfig = (getState) => {
-  const token = getState().auth.token
-
-  const config = {
-    headers: {
-      'Content-type': 'application/json'
-    }
-  }
-
-  if (token) config.headers.authorization = `Bearer ${token}`
-  return config
-}
+import API from '../api'
 
 export const loadUser = () => (dispatch, getState) => {
   dispatch({ type: USER_LOADING })
-  axios.get('/users/get', tokenConfig(getState))
-    .then(res => {
-      setTimeout(() => {
-        dispatch({ 
-          type: USER_LOADED,
-          payload: res.data
-        })
-      }, 3000)
-    })
-    .catch(err => {
-      dispatch({ type: AUTH_ERROR })
-      console.log(err)
-    })
+  API.getUser()
+    .then(res => dispatch({ type: USER_LOADED, payload: res.data }))
+    .catch(err => dispatch({ type: AUTH_ERROR }))
 }
 
-export const register = ({ username, email, password }) => (dispatch, getState) => {
+export const register = (body) => (dispatch, getState) => {
   dispatch({ type: USER_LOADING })
-  axios.post('/users/signup', { username, email, password })
+  API.register(body)
       .then(res => dispatch({ type: REGISTER_SUCCESS, payload: res.data }))
       .catch(err => dispatch({ type: REGISTER_FAIL }))
 }
 
-export const login = ({ usernameOrEmail, password }) => (dispatch, getState) => {
+export const login = (body) => (dispatch, getState) => {
   dispatch({ type: USER_LOADING })
-  axios.post('/users/signin', { usernameOrEmail, password })
+  API.login(body)
       .then(res => dispatch({ type: LOGIN_SUCCESS, payload: res.data }))
       .catch(err => dispatch({ type: LOGIN_FAIL }))
 }

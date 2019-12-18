@@ -1,4 +1,5 @@
 import Cookies from 'js-cookie'
+import axios from 'axios'
 
 import {
   USER_LOADING,
@@ -36,10 +37,12 @@ const authReducer = (state = initialAuthState, action) => {
       }
     case LOGIN_SUCCESS:
     case REGISTER_SUCCESS:
+      const token = Cookies.get('jwt')
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
       return {
         ...state,
         ...action.payload,
-        token: Cookies.get('jwt'),
+        token,
         authenticated: true,
       }
     case AUTH_ERROR:
@@ -47,6 +50,7 @@ const authReducer = (state = initialAuthState, action) => {
     case LOGOUT_SUCCESS:
     case REGISTER_FAIL:
       Cookies.remove('jwt')
+      delete axios.defaults.headers.common['Authorization']
       return {
         ...state,
         token: null,

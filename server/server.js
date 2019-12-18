@@ -18,6 +18,7 @@ mongoose.connect(DB_URI, {
 
 // Setup server
 const app = express()
+const PORT = process.env.PORT || 8080
 
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
@@ -37,6 +38,14 @@ app.use('/users', require('./routes/users'))
 // Protected
 app.use('/dashboard', verifyToken, require('./routes/dashboard'))
 
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static("client/build"))
+}
+
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, '../client/build/index.html'))
+})
+
 // express-promise-router handles all errors thrown inside
 // the route handlers and passes them in next()
 app.use((err, req, res, next) => {
@@ -46,6 +55,4 @@ app.use((err, req, res, next) => {
 })
 
 // Start server
-const PORT = process.env.PORT || 8080
-
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`))

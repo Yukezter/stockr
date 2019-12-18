@@ -7,7 +7,6 @@ class PrivateRoute extends React.Component {
   render() {
 
     const { path, component: Component, location, token } = this.props
-    console.log('Token: ', this.props.token)
 
     return (
       <Route 

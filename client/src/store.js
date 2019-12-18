@@ -3,9 +3,8 @@ import thunk from 'redux-thunk'
 
 import allReducers from './reducers'
 
-const initialState = {}
-
 const middleware = [thunk]
+const initialState = {}
 
 const store = createStore(
     allReducers,

@@ -1,27 +1,10 @@
-const jwt = require('jsonwebtoken')
-
 const User = require('../models/User')
 const Token = require('../models/Token')
 
-const { formValidation } = require('../util')
+const { formValidation, JWT } = require('../util')
 const { ApplicationError } = require('../ApplicationError')
 
-const signJWT = userId => {
-  return jwt.sign({
-    iss: 'Stockr',
-    sub: userId,
-    iat: new Date().getTime(),
-    // exp: Math.floor(Date.now() / 1000) + (60 * 5) // 5 minutes
-  }, process.env.TOKEN_SECRET)
-}
-
 module.exports = {
-  get: async (req, res, next) => {
-    res.json({
-      username: req.user.username,
-      email: req.user.email
-    })
-  },
   signUp: async (req, res, next) => {
     // Form validation
     const { error } = formValidation.signUpValidation(req.body)
@@ -44,11 +27,12 @@ module.exports = {
     const savedUser = await newUser.save()
 
     // Email the user the confirmation link
+    // *** CHANGE EMAIL BEFORE PRODUCTION ***
     await savedUser.sendVerificationEmail('ananonymouspuffin@gmail.com')
 
     // Create JWT token
-    const jwtToken = signJWT(savedUser._id)
-    res.cookie('jwt', jwtToken).send(jwtToken)
+    const jwtToken = JWT.sign(savedUser._id)
+    res.cookie('jwt', jwtToken).json(req.user)
   },
   signIn: async (req, res, next) => {
     // Form validation
@@ -71,8 +55,8 @@ module.exports = {
     if (!isMatch) throw new ApplicationError(401, 'invalid password')
 
     // Create JWT token
-    const jwtToken = signJWT(user._id)
-    res.cookie('jwt', jwtToken).send(jwtToken)
+    const jwtToken = JWT.sign(user._id)
+    res.cookie('jwt', jwtToken).json(req.user)
   },
   emailVerification: async (req, res, next) => {
     const { token } = req.query
@@ -86,6 +70,6 @@ module.exports = {
     user.verificationPending = false
     await user.save()
 
-    res.send(user)
+    res.json(user)
   }, 
 }

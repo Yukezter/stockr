@@ -16,7 +16,6 @@ class DashboardRedux extends React.Component {
   }
 
   render() {
-
     if (this.props.loading) {
       return (
         <h1>Loading...</h1>
